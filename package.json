@@ -11,12 +11,17 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^5.15.19",
     "@remix-run/node": "^2.9.2",
     "@remix-run/react": "^2.9.2",
     "@remix-run/serve": "^2.9.2",
+    "currency.js": "^2.0.4",
     "isbot": "^4.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "json-2-csv": "^5.5.1",
+    "react": "rc",
+    "react-dom": "rc"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.9.2",
@@ -33,6 +38,10 @@
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1"
+  },
+  "overrides": {
+    "react": "rc",
+    "react-dom": "rc"
   },
   "engines": {
     "node": ">=20.0.0"
