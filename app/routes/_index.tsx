@@ -1,4 +1,4 @@
-import { Button, Container, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Link, Button, Container, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import type { MetaFunction } from "@remix-run/node";
 import currency from "currency.js";
 import { csv2json, json2csv } from "json-2-csv";
@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EasyPostAddress, EasyPostPackageType, EasyPostParcel, EasyPostService, EasyPostShipment } from "~/easypost/types";
 import { useLocalStorageState } from "~/hooks/useLocalStorageState";
 import { TcgPlayerOrder, TcgPlayerShippingMethod } from "~/tcgplayer/types";
+import { Link as RemixLink } from "@remix-run/react";
 
 type ShipmentToOrderMap = {
   [reference: string]: string[]
@@ -309,6 +310,7 @@ export default function Index() {
   return (
     <Container>
       <Stack spacing={2} margin={2}>
+        <Link component={RemixLink} to="/how-to-use">How To Use</Link>
         <Typography variant="h6">From Address</Typography>
         <Stack direction='row' spacing={2}>
           <TextField
