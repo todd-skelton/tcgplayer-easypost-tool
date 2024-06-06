@@ -5,7 +5,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { CssBaseline, createTheme } from "@mui/material";
+import { CssBaseline, ThemeProvider, createTheme, useMediaQuery } from "@mui/material";
+import { useMemo } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +17,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body suppressHydrationWarning>
+      <body>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -25,13 +26,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-const theme = createTheme();
-
 export default function App() {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: prefersDarkMode ? 'dark' : 'light',
+        },
+      }),
+    [prefersDarkMode],
+  );
+  
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Outlet />
-    </>
+    </ThemeProvider>
   );
 }
