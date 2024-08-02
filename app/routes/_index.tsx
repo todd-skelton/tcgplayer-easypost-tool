@@ -107,6 +107,9 @@ const mergeOrdersByAddress = (orders: TcgPlayerOrder[]): [TcgPlayerOrder[], Ship
       shipmentToOrderMap[acc[addressKey]['Order #']] = [...shipmentToOrderMap[acc[addressKey]['Order #']], order['Order #']]
       acc[addressKey]['Item Count'] += order['Item Count'];
       acc[addressKey]['Value of Products'] = currency(acc[addressKey]['Value of Products']).add(order['Value of Products']).toString();
+      if(order['Shipping Method'] === 'Priority') {
+        acc[addressKey]['Shipping Method'] = 'Priority';
+      }
     }
 
     return acc;
