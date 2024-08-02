@@ -606,7 +606,7 @@ export default function Index() {
                     </TableCell>
                     <TableCell>
                       <Typography component="pre">
-                        {`Item Count: ${order?.['Item Count']}\nSize (in): ${shipment.parcel.length} × ${shipment.parcel.width} × ${shipment.parcel.height}\nWeight (oz): ${shipment.parcel.weight}\nPredefined Package: ${shipment.parcel.predefined_package}\n${shipment.options.delivery_confirmation === 'SIGNATURE' ? 'Signature Required' : 'No Signature Required'}`}
+                        {`Order Total: ${order?.['Value of Products']}\nItem Count: ${order?.['Item Count']}\nSize (in): ${shipment.parcel.length} × ${shipment.parcel.width} × ${shipment.parcel.height}\nWeight (oz): ${shipment.parcel.weight}\nPredefined Package: ${shipment.parcel.predefined_package}\n${shipment.options.delivery_confirmation === 'SIGNATURE' ? 'Signature Required' : 'No Signature Required'}`}
                       </Typography>
                     </TableCell>
                   </TableRow>
