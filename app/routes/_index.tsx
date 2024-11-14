@@ -72,7 +72,6 @@ type ShippingSettings = {
 const csv2jsonOptions = {
   delimiter: {
     field: ",",
-    eol: "\r\n",
   },
 };
 
@@ -138,9 +137,14 @@ const mergeOrdersByAddress = (
   orders: TcgPlayerOrder[]
 ): [TcgPlayerOrder[], ShipmentToOrderMap] => {
   const shipmentToOrderMap: ShipmentToOrderMap = {};
+  const processedOrderNumbers = new Set<string>();
   const mergedOrders = orders.reduce(
     (acc: { [key: string]: TcgPlayerOrder }, order) => {
-      if (order["Order #"] === "") return acc;
+      if (
+        order["Order #"] === "" ||
+        processedOrderNumbers.has(order["Order #"])
+      )
+        return acc;
 
       const addressKey = `${order.Address1}-${order.Address2}-${order.City}-${order.State}-${order.PostalCode}`;
 
@@ -153,21 +157,21 @@ const mergeOrdersByAddress = (
           order["Order #"],
         ];
         acc[addressKey]["Item Count"] += order["Item Count"];
-        acc[addressKey]["Value of Products"] = currency(
-          acc[addressKey]["Value of Products"]
+        acc[addressKey]["Value Of Products"] = currency(
+          acc[addressKey]["Value Of Products"]
         )
-          .add(order["Value of Products"])
+          .add(order["Value Of Products"])
           .toString();
-        if (order["Shipping Method"] === "Priority") {
+        if (order["Shipping Method"].startsWith("Priority")) {
           acc[addressKey]["Shipping Method"] = "Priority";
         }
       }
 
+      processedOrderNumbers.add(order["Order #"]);
       return acc;
     },
     {}
   );
-
   return [Object.values(mergedOrders), shipmentToOrderMap];
 };
 
@@ -190,18 +194,18 @@ function mapOrderToShipment(
   const toAddress: EasyPostAddress = mapOrderToAddress(order);
 
   const itemCount = order["Item Count"];
-  const valueOfProducts = currency(order["Value of Products"]);
+  const valueOfProducts = currency(order["Value Of Products"]);
   const shippingMethod = order["Shipping Method"];
 
   const service = calculateService(
-    itemCount,
+    parseInt(itemCount),
     valueOfProducts.value,
     shippingMethod,
     settings
   );
 
   const parcelType = calculatePackageType(
-    itemCount,
+    parseInt(itemCount),
     valueOfProducts.value,
     shippingMethod,
     settings
@@ -216,7 +220,7 @@ function mapOrderToShipment(
           weight:
             Math.ceil(
               (settings.letter.baseWeight +
-                itemCount * settings.letter.perItemWeight) *
+                parseInt(itemCount) * settings.letter.perItemWeight) *
                 100
             ) / 100,
           predefined_package: "Letter",
@@ -229,7 +233,7 @@ function mapOrderToShipment(
           weight:
             Math.ceil(
               (settings.flat.baseWeight +
-                itemCount * settings.flat.perItemWeight) *
+                parseInt(itemCount) * settings.flat.perItemWeight) *
                 100
             ) / 100,
           predefined_package: "Flat",
@@ -241,7 +245,7 @@ function mapOrderToShipment(
           weight:
             Math.ceil(
               (settings.parcel.baseWeight +
-                itemCount * settings.parcel.perItemWeight) *
+                parseInt(itemCount) * settings.parcel.perItemWeight) *
                 100
             ) / 100,
           predefined_package: "Parcel",
@@ -772,7 +776,7 @@ export default function Index() {
                     <TableCell>
                       <Typography component="pre">
                         {`Order Total: ${
-                          order?.["Value of Products"]
+                          order?.["Value Of Products"]
                         }\nItem Count: ${order?.["Item Count"]}\nSize (in): ${
                           shipment.parcel.length
                         } × ${shipment.parcel.width} × ${
