@@ -91,7 +91,7 @@ const calculateService = (
   shippingMethod: TcgPlayerShippingMethod,
   settings: ShippingSettings
 ): EasyPostService => {
-  if (shippingMethod === "Priority") return "GroundAdvantage";
+  if (shippingMethod.startsWith("Expedited")) return "GroundAdvantage";
   if (valueOfProducts >= settings.flat.maxValue) return "GroundAdvantage";
   if (itemCount > settings.flat.maxItemCount) return "GroundAdvantage";
   return "First";
@@ -104,7 +104,7 @@ const calculatePackageType = (
   settings: ShippingSettings
 ): EasyPostPackageType => {
   if (itemCount > settings.flat.maxItemCount) return "Parcel";
-  if (shippingMethod === "Priority") return "Parcel";
+  if (shippingMethod.startsWith("Expedited")) return "Parcel";
   if (valueOfProducts >= settings.flat.maxValue) return "Parcel";
   if (itemCount > settings.letter.maxItemCount) return "Flat";
   return "Letter";
@@ -162,8 +162,8 @@ const mergeOrdersByAddress = (
         )
           .add(order["Value Of Products"])
           .toString();
-        if (order["Shipping Method"].startsWith("Priority")) {
-          acc[addressKey]["Shipping Method"] = "Priority";
+        if (order["Shipping Method"].startsWith("Expedited")) {
+          acc[addressKey]["Shipping Method"] = order["Shipping Method"];
         }
       }
 
