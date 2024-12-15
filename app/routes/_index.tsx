@@ -374,7 +374,6 @@ export default function Index() {
         csvInput,
         csv2jsonOptions
       ) as TcgPlayerOrder[];
-      console.log(orders);
       const [mergedOrders, shipmentToOrderMap] = mergeOrdersByAddress(orders);
       setOrders(mergedOrders);
       setShipmentToOrderMap(shipmentToOrderMap);
