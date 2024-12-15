@@ -31,6 +31,7 @@ import {
 import { useLocalStorageState } from "~/hooks/useLocalStorageState";
 import { TcgPlayerOrder, TcgPlayerShippingMethod } from "~/tcgplayer/types";
 import { Link as RemixLink } from "@remix-run/react";
+import { normalizeZipCode } from "~/utilities/normalizeZipCode";
 
 type ShipmentToOrderMap = {
   [reference: string]: string[];
@@ -70,6 +71,12 @@ type ShippingSettings = {
 };
 
 const csv2jsonOptions = {
+  delimiter: {
+    field: ",",
+  },
+};
+
+const json2csvOptions = {
   delimiter: {
     field: ",",
   },
@@ -122,7 +129,7 @@ const downloadCsvByLabelSize = (
   const filteredShipments = shipments.filter(
     (shipment) => shipment.options.label_size === labelSize
   );
-  const csvData = json2csv(filteredShipments, csv2jsonOptions);
+  const csvData = json2csv(filteredShipments, json2csvOptions);
   const blob = new Blob([csvData], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -159,9 +166,7 @@ const mergeOrdersByAddress = (
         acc[addressKey]["Item Count"] += order["Item Count"];
         acc[addressKey]["Value Of Products"] = currency(
           acc[addressKey]["Value Of Products"]
-        )
-          .add(order["Value Of Products"])
-          .toString();
+        ).add(order["Value Of Products"]).value;
         if (order["Shipping Method"].startsWith("Expedited")) {
           acc[addressKey]["Shipping Method"] = order["Shipping Method"];
         }
@@ -182,7 +187,7 @@ const mapOrderToAddress = (order: TcgPlayerOrder): EasyPostAddress => {
     street2: order.Address2,
     city: order.City,
     state: order.State,
-    zip: order.PostalCode,
+    zip: normalizeZipCode(order.PostalCode),
     country: order.Country,
   };
 };
@@ -198,14 +203,14 @@ function mapOrderToShipment(
   const shippingMethod = order["Shipping Method"];
 
   const service = calculateService(
-    parseInt(itemCount),
+    itemCount,
     valueOfProducts.value,
     shippingMethod,
     settings
   );
 
   const parcelType = calculatePackageType(
-    parseInt(itemCount),
+    itemCount,
     valueOfProducts.value,
     shippingMethod,
     settings
@@ -220,7 +225,7 @@ function mapOrderToShipment(
           weight:
             Math.ceil(
               (settings.letter.baseWeight +
-                parseInt(itemCount) * settings.letter.perItemWeight) *
+                itemCount * settings.letter.perItemWeight) *
                 100
             ) / 100,
           predefined_package: "Letter",
@@ -233,7 +238,7 @@ function mapOrderToShipment(
           weight:
             Math.ceil(
               (settings.flat.baseWeight +
-                parseInt(itemCount) * settings.flat.perItemWeight) *
+                itemCount * settings.flat.perItemWeight) *
                 100
             ) / 100,
           predefined_package: "Flat",
@@ -245,7 +250,7 @@ function mapOrderToShipment(
           weight:
             Math.ceil(
               (settings.parcel.baseWeight +
-                parseInt(itemCount) * settings.parcel.perItemWeight) *
+                itemCount * settings.parcel.perItemWeight) *
                 100
             ) / 100,
           predefined_package: "Parcel",
@@ -369,6 +374,7 @@ export default function Index() {
         csvInput,
         csv2jsonOptions
       ) as TcgPlayerOrder[];
+      console.log(orders);
       const [mergedOrders, shipmentToOrderMap] = mergeOrdersByAddress(orders);
       setOrders(mergedOrders);
       setShipmentToOrderMap(shipmentToOrderMap);
