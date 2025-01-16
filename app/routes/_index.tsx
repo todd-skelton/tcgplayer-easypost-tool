@@ -41,31 +41,31 @@ type ShippingSettings = {
   fromAddress: EasyPostAddress;
   letter: {
     labelSize: "4x6" | "7x3" | "6x4";
-    baseWeight: number;
-    perItemWeight: number;
-    maxItemCount: number;
-    maxValue: number;
-    length: number;
-    width: number;
-    height: number;
+    baseWeight: string;
+    perItemWeight: string;
+    maxItemCount: string;
+    maxValue: string;
+    length: string;
+    width: string;
+    height: string;
   };
   flat: {
     labelSize: "4x6" | "7x3" | "6x4";
-    baseWeight: number;
-    perItemWeight: number;
-    maxItemCount: number;
-    maxValue: number;
-    length: number;
-    width: number;
-    height: number;
+    baseWeight: string;
+    perItemWeight: string;
+    maxItemCount: string;
+    maxValue: string;
+    length: string;
+    width: string;
+    height: string;
   };
   parcel: {
     labelSize: "4x6" | "7x3" | "6x4";
-    baseWeight: number;
-    perItemWeight: number;
-    length: number;
-    width: number;
-    height: number;
+    baseWeight: string;
+    perItemWeight: string;
+    length: string;
+    width: string;
+    height: string;
   };
   labelFormat: "PDF" | "PNG";
 };
@@ -99,8 +99,9 @@ const calculateService = (
   settings: ShippingSettings
 ): EasyPostService => {
   if (shippingMethod.startsWith("Expedited")) return "GroundAdvantage";
-  if (valueOfProducts >= settings.flat.maxValue) return "GroundAdvantage";
-  if (itemCount > settings.flat.maxItemCount) return "GroundAdvantage";
+  if (valueOfProducts >= Number(settings.flat.maxValue))
+    return "GroundAdvantage";
+  if (itemCount > Number(settings.flat.maxItemCount)) return "GroundAdvantage";
   return "First";
 };
 
@@ -110,10 +111,10 @@ const calculatePackageType = (
   shippingMethod: TcgPlayerShippingMethod,
   settings: ShippingSettings
 ): EasyPostPackageType => {
-  if (itemCount > settings.flat.maxItemCount) return "Parcel";
+  if (itemCount > Number(settings.flat.maxItemCount)) return "Parcel";
   if (shippingMethod.startsWith("Expedited")) return "Parcel";
-  if (valueOfProducts >= settings.flat.maxValue) return "Parcel";
-  if (itemCount > settings.letter.maxItemCount) return "Flat";
+  if (valueOfProducts >= Number(settings.flat.maxValue)) return "Parcel";
+  if (itemCount > Number(settings.letter.maxItemCount)) return "Flat";
   return "Letter";
 };
 
@@ -219,38 +220,38 @@ function mapOrderToShipment(
   const parcel: EasyPostParcel =
     service === "First" && parcelType === "Letter"
       ? {
-          length: settings.letter.length,
-          width: settings.letter.width,
-          height: settings.letter.height,
+          length: Number(settings.letter.length),
+          width: Number(settings.letter.width),
+          height: Number(settings.letter.height),
           weight:
             Math.ceil(
-              (settings.letter.baseWeight +
-                itemCount * settings.letter.perItemWeight) *
+              (Number(settings.letter.baseWeight) +
+                itemCount * Number(settings.letter.perItemWeight)) *
                 100
             ) / 100,
           predefined_package: "Letter",
         }
       : service === "First" && parcelType === "Flat"
       ? {
-          length: settings.flat.length,
-          width: settings.flat.width,
-          height: settings.flat.height,
+          length: Number(settings.flat.length),
+          width: Number(settings.flat.width),
+          height: Number(settings.flat.height),
           weight:
             Math.ceil(
-              (settings.flat.baseWeight +
-                itemCount * settings.flat.perItemWeight) *
+              (Number(settings.flat.baseWeight) +
+                itemCount * Number(settings.flat.perItemWeight)) *
                 100
             ) / 100,
           predefined_package: "Flat",
         }
       : {
-          length: settings.parcel.length,
-          width: settings.parcel.width,
-          height: settings.parcel.height,
+          length: Number(settings.parcel.length),
+          width: Number(settings.parcel.width),
+          height: Number(settings.parcel.height),
           weight:
             Math.ceil(
-              (settings.parcel.baseWeight +
-                itemCount * settings.parcel.perItemWeight) *
+              (Number(settings.parcel.baseWeight) +
+                itemCount * Number(settings.parcel.perItemWeight)) *
                 100
             ) / 100,
           predefined_package: "Parcel",
@@ -320,31 +321,31 @@ const defaultShippingSettings: ShippingSettings = {
   fromAddress: defaultAddress,
   letter: {
     labelSize: "7x3",
-    baseWeight: defaultLetterBaseWeight,
-    maxItemCount: defaultMaxLetterItemCount,
-    maxValue: defaultMaxLetterValue,
-    length: 9.5,
-    width: 4.125,
-    height: 0.25,
-    perItemWeight: defaultPerItemWeight,
+    baseWeight: defaultLetterBaseWeight.toString(),
+    maxItemCount: defaultMaxLetterItemCount.toString(),
+    maxValue: defaultMaxLetterValue.toString(),
+    length: "9.5",
+    width: "4.125",
+    height: "0.25",
+    perItemWeight: defaultPerItemWeight.toString(),
   },
   flat: {
     labelSize: "4x6",
-    baseWeight: defaultFlatBaseWeight,
-    maxItemCount: defaultMaxFlatItemCount,
-    maxValue: defaultMaxFlatValue,
-    length: 5,
-    width: 7,
-    height: 0.75,
-    perItemWeight: defaultPerItemWeight,
+    baseWeight: defaultFlatBaseWeight.toString(),
+    maxItemCount: defaultMaxFlatItemCount.toString(),
+    maxValue: defaultMaxFlatValue.toString(),
+    length: "5",
+    width: "7",
+    height: "0.75",
+    perItemWeight: defaultPerItemWeight.toString(),
   },
   parcel: {
     labelSize: "4x6",
-    baseWeight: defaultParcelBaseWeight,
-    length: 7,
-    width: 9,
-    height: 0.75,
-    perItemWeight: defaultPerItemWeight,
+    baseWeight: defaultParcelBaseWeight.toString(),
+    length: "7",
+    width: "9",
+    height: "0.75",
+    perItemWeight: defaultPerItemWeight.toString(),
   },
   labelFormat: "PDF",
 };
@@ -576,18 +577,21 @@ export default function Index() {
           </FormControl>
           <TextField
             label="Per Item Weight (oz)"
+            type="number"
             value={shippingSettingsOrDefault.letter.perItemWeight}
             onChange={handleUpdateLetterSettings("perItemWeight")}
             fullWidth
           />
           <TextField
             label="Base Weight (oz)"
+            type="number"
             value={shippingSettingsOrDefault.letter.baseWeight}
             onChange={handleUpdateLetterSettings("baseWeight")}
             fullWidth
           />
           <TextField
             label="Max Item Count"
+            type="number"
             value={shippingSettingsOrDefault.letter.maxItemCount}
             onChange={handleUpdateLetterSettings("maxItemCount")}
             fullWidth
@@ -596,24 +600,28 @@ export default function Index() {
         <Stack direction="row" spacing={2}>
           <TextField
             label="Max Value"
+            type="number"
             value={shippingSettingsOrDefault.letter.maxValue.toString()}
             onChange={handleUpdateLetterSettings("maxValue")}
             fullWidth
           />
           <TextField
             label="Length (in)"
+            type="number"
             value={shippingSettingsOrDefault.letter.length}
             onChange={handleUpdateLetterSettings("length")}
             fullWidth
           />
           <TextField
             label="Width (in)"
+            type="number"
             value={shippingSettingsOrDefault.letter.width}
             onChange={handleUpdateLetterSettings("width")}
             fullWidth
           />
           <TextField
             label="Height (in)"
+            type="number"
             value={shippingSettingsOrDefault.letter.height}
             onChange={handleUpdateLetterSettings("height")}
             fullWidth
@@ -637,18 +645,21 @@ export default function Index() {
           </FormControl>
           <TextField
             label="Per Item Weight (oz)"
+            type="number"
             value={shippingSettingsOrDefault.flat.perItemWeight}
             onChange={handleUpdateFlatSettings("perItemWeight")}
             fullWidth
           />
           <TextField
             label="Base Weight (oz)"
+            type="number"
             value={shippingSettingsOrDefault.flat.baseWeight}
             onChange={handleUpdateFlatSettings("baseWeight")}
             fullWidth
           />
           <TextField
             label="Max Item Count"
+            type="number"
             value={shippingSettingsOrDefault.flat.maxItemCount}
             onChange={handleUpdateFlatSettings("maxItemCount")}
             fullWidth
@@ -657,24 +668,28 @@ export default function Index() {
         <Stack direction="row" spacing={2}>
           <TextField
             label="Max Value"
+            type="number"
             value={shippingSettingsOrDefault.flat.maxValue.toString()}
             onChange={handleUpdateFlatSettings("maxValue")}
             fullWidth
           />
           <TextField
             label="Length (in)"
+            type="number"
             value={shippingSettingsOrDefault.flat.length}
             onChange={handleUpdateFlatSettings("length")}
             fullWidth
           />
           <TextField
             label="Width (in)"
+            type="number"
             value={shippingSettingsOrDefault.flat.width}
             onChange={handleUpdateFlatSettings("width")}
             fullWidth
           />
           <TextField
             label="Height (in)"
+            type="number"
             value={shippingSettingsOrDefault.flat.height}
             onChange={handleUpdateFlatSettings("height")}
             fullWidth
@@ -698,12 +713,14 @@ export default function Index() {
           </FormControl>
           <TextField
             label="Per Item Weight (oz)"
+            type="number"
             value={shippingSettingsOrDefault.parcel.perItemWeight}
             onChange={handleUpdateParcelSettings("perItemWeight")}
             fullWidth
           />
           <TextField
             label="Base Weight (oz)"
+            type="number"
             value={shippingSettingsOrDefault.parcel.baseWeight}
             onChange={handleUpdateParcelSettings("baseWeight")}
             fullWidth
@@ -712,18 +729,21 @@ export default function Index() {
         <Stack direction="row" spacing={2}>
           <TextField
             label="Length (in)"
+            type="number"
             value={shippingSettingsOrDefault.parcel.length}
             onChange={handleUpdateParcelSettings("length")}
             fullWidth
           />
           <TextField
             label="Width (in)"
+            type="number"
             value={shippingSettingsOrDefault.parcel.width}
             onChange={handleUpdateParcelSettings("width")}
             fullWidth
           />
           <TextField
             label="Height (in)"
+            type="number"
             value={shippingSettingsOrDefault.parcel.height}
             onChange={handleUpdateParcelSettings("height")}
             fullWidth
