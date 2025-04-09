@@ -16,7 +16,10 @@ import {
   TableRow,
   TextField,
   Typography,
+  IconButton,
+  Drawer,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 import type { MetaFunction } from "@remix-run/node";
 import currency from "currency.js";
 import { csv2json, json2csv } from "json-2-csv";
@@ -268,6 +271,7 @@ function mapOrderToShipment(
     reference: order["Order #"],
     to_address: toAddress,
     from_address: settings.fromAddress,
+    return_address: settings.fromAddress,
     parcel: parcel,
     carrier: "USPS",
     service: service,
@@ -362,6 +366,39 @@ export default function Index() {
       defaultShippingSettings
     );
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedShipment, setSelectedShipment] =
+    useState<EasyPostShipment | null>(null);
+
+  const handleEditClick = (shipment: EasyPostShipment) => {
+    setSelectedShipment(shipment);
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+    setSelectedShipment(null);
+  };
+
+  const handleShipmentChange = (changes: Partial<EasyPostShipment>) => {
+    if (selectedShipment) {
+      setSelectedShipment({ ...selectedShipment, ...changes });
+    }
+  };
+
+  const saveShipmentChanges = () => {
+    if (selectedShipment) {
+      setShipments((prevShipments) =>
+        prevShipments.map((shipment) =>
+          shipment.reference === selectedShipment.reference
+            ? selectedShipment
+            : shipment
+        )
+      );
+      setDrawerOpen(false);
+    }
+  };
+
   const shippingSettingsOrDefault = shippingSettings ?? defaultShippingSettings;
 
   const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -397,6 +434,23 @@ export default function Index() {
       );
       if (shipmentsByLabelSize.length > 0) {
         downloadCsvByLabelSize(labelSize, shipmentsByLabelSize);
+      }
+    }
+  };
+
+  const downloadReturnCsv = () => {
+    const labelSizes = ["4x6", "7x3", "6x4"] as const;
+    for (const labelSize of labelSizes) {
+      const returnShipments = shipments
+        .filter((shipment) => shipment.options.label_size === labelSize)
+        .map((shipment) => ({
+          ...shipment,
+          to_address: shipment.from_address,
+          from_address: shipment.to_address,
+        }));
+
+      if (returnShipments.length > 0) {
+        downloadCsvByLabelSize(labelSize, returnShipments);
       }
     }
   };
@@ -767,9 +821,22 @@ export default function Index() {
         </Stack>
         <Typography variant="h6">TCG Player Shipping Export</Typography>
         <input type="file" accept=".csv" onChange={handleFileInput} />
-        <Button onClick={downloadCsv} disabled={!csvOutput} variant="contained">
-          Download EasyPost CSV(s)
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            onClick={downloadCsv}
+            disabled={!csvOutput}
+            variant="contained"
+          >
+            Download EasyPost CSV(s)
+          </Button>
+          <Button
+            onClick={downloadReturnCsv}
+            disabled={!csvOutput}
+            variant="contained"
+          >
+            Download Return CSV(s)
+          </Button>
+        </Stack>
         <TableContainer>
           <Table>
             <TableHead>
@@ -778,6 +845,7 @@ export default function Index() {
                 <TableCell>To Address</TableCell>
                 <TableCell>From Address</TableCell>
                 <TableCell>Parcel Details</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -817,12 +885,260 @@ export default function Index() {
                         }`}
                       </Typography>
                     </TableCell>
+                    <TableCell>
+                      <IconButton
+                        onClick={() => handleEditClick(shipment)}
+                        color="primary"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
         </TableContainer>
+        <Drawer anchor="right" open={drawerOpen} onClose={handleDrawerClose}>
+          <Container sx={{ width: 400, padding: 2 }}>
+            {selectedShipment && (
+              <Stack spacing={2}>
+                <Typography variant="h6">Edit Shipment</Typography>
+                <TextField
+                  label="Reference"
+                  value={selectedShipment.reference}
+                  onChange={(e) =>
+                    handleShipmentChange({ reference: e.target.value })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel id="carrier-label">Carrier</InputLabel>
+                  <Select
+                    labelId="carrier-label"
+                    label="Carrier"
+                    value={selectedShipment.carrier}
+                    onChange={(e) =>
+                      handleShipmentChange({
+                        carrier: e.target.value as "USPS",
+                      })
+                    }
+                  >
+                    <MenuItem value="USPS">USPS</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel id="service-label">Service</InputLabel>
+                  <Select
+                    labelId="service-label"
+                    label="Service"
+                    value={selectedShipment.service}
+                    onChange={(e) => {
+                      const newService = e.target.value as EasyPostService;
+                      const updatedParcel =
+                        newService === "First"
+                          ? {
+                              ...selectedShipment.parcel,
+                              predefined_package: "Letter",
+                            }
+                          : {
+                              ...selectedShipment.parcel,
+                              predefined_package: "Parcel",
+                            };
+                      handleShipmentChange({
+                        service: newService,
+                        parcel: updatedParcel as EasyPostParcel,
+                      });
+                    }}
+                  >
+                    <MenuItem value="First">First</MenuItem>
+                    <MenuItem value="GroundAdvantage">
+                      Ground Advantage
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+                <Typography variant="h6">Parcel Details</Typography>
+                <TextField
+                  label="Length (in)"
+                  type="number"
+                  value={selectedShipment.parcel.length}
+                  onChange={(e) =>
+                    handleShipmentChange({
+                      parcel: {
+                        ...selectedShipment.parcel,
+                        length: Number(e.target.value),
+                      },
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="Width (in)"
+                  type="number"
+                  value={selectedShipment.parcel.width}
+                  onChange={(e) =>
+                    handleShipmentChange({
+                      parcel: {
+                        ...selectedShipment.parcel,
+                        width: Number(e.target.value),
+                      },
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="Height (in)"
+                  type="number"
+                  value={selectedShipment.parcel.height}
+                  onChange={(e) =>
+                    handleShipmentChange({
+                      parcel: {
+                        ...selectedShipment.parcel,
+                        height: Number(e.target.value),
+                      },
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="Weight (oz)"
+                  type="number"
+                  value={selectedShipment.parcel.weight}
+                  onChange={(e) =>
+                    handleShipmentChange({
+                      parcel: {
+                        ...selectedShipment.parcel,
+                        weight: Number(e.target.value),
+                      },
+                    })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel id="predefined-package-label">
+                    Predefined Package
+                  </InputLabel>
+                  <Select
+                    labelId="predefined-package-label"
+                    label="Predefined Package"
+                    value={selectedShipment.parcel.predefined_package}
+                    onChange={(e) =>
+                      handleShipmentChange({
+                        parcel: {
+                          ...selectedShipment.parcel,
+                          predefined_package: e.target
+                            .value as EasyPostPackageType,
+                        },
+                      })
+                    }
+                  >
+                    <MenuItem
+                      disabled={selectedShipment.service !== "First"}
+                      value="Letter"
+                    >
+                      Letter
+                    </MenuItem>
+                    <MenuItem
+                      disabled={selectedShipment.service !== "First"}
+                      value="Flat"
+                    >
+                      Flat
+                    </MenuItem>
+                    <MenuItem
+                      disabled={selectedShipment.service === "First"}
+                      value="Parcel"
+                    >
+                      Parcel
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+                <Typography variant="h6">Options</Typography>
+                <FormControl fullWidth>
+                  <InputLabel id="label-format-label">Label Format</InputLabel>
+                  <Select
+                    labelId="label-format-label"
+                    label="Label Format"
+                    value={selectedShipment.options.label_format}
+                    onChange={(e) =>
+                      handleShipmentChange({
+                        options: {
+                          ...selectedShipment.options,
+                          label_format: e.target.value as "PNG" | "PDF",
+                        },
+                      })
+                    }
+                  >
+                    <MenuItem value="PNG">PNG</MenuItem>
+                    <MenuItem value="PDF">PDF</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel id="label-size-label">Label Size</InputLabel>
+                  <Select
+                    labelId="label-size-label"
+                    label="Label Size"
+                    value={selectedShipment.options.label_size}
+                    onChange={(e) =>
+                      handleShipmentChange({
+                        options: {
+                          ...selectedShipment.options,
+                          label_size: e.target.value as "4x6" | "7x3" | "6x4",
+                        },
+                      })
+                    }
+                  >
+                    <MenuItem value="4x6">4x6</MenuItem>
+                    <MenuItem value="7x3">7x3</MenuItem>
+                    <MenuItem value="6x4">6x4</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="Invoice Number"
+                  value={selectedShipment.options.invoice_number}
+                  onChange={(e) =>
+                    handleShipmentChange({
+                      options: {
+                        ...selectedShipment.options,
+                        invoice_number: e.target.value,
+                      },
+                    })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel id="delivery-confirmation-label">
+                    Delivery Confirmation
+                  </InputLabel>
+                  <Select
+                    labelId="delivery-confirmation-label"
+                    label="Delivery Confirmation"
+                    value={selectedShipment.options.delivery_confirmation}
+                    onChange={(e) =>
+                      handleShipmentChange({
+                        options: {
+                          ...selectedShipment.options,
+                          delivery_confirmation: e.target.value as
+                            | "NO_SIGNATURE"
+                            | "SIGNATURE",
+                        },
+                      })
+                    }
+                  >
+                    <MenuItem value="NO_SIGNATURE">No Signature</MenuItem>
+                    <MenuItem value="SIGNATURE">Signature</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={saveShipmentChanges}
+                >
+                  Save
+                </Button>
+              </Stack>
+            )}
+          </Container>
+        </Drawer>
       </Stack>
     </Container>
   );
