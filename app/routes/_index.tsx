@@ -18,6 +18,7 @@ import {
   Typography,
   IconButton,
   Drawer,
+  Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import ReplyIcon from "@mui/icons-material/Reply";
@@ -835,14 +836,23 @@ export default function Index() {
             </FormControl>
           </Stack>
           <Typography variant="h6">TCG Player Shipping Export</Typography>
-          <input type="file" accept=".csv" onChange={handleFileInput} />
+
           <Stack direction="row" spacing={2}>
+            <Button variant="contained" component="label">
+              Upload TCGPLAYER Shipping Export
+              <input
+                type="file"
+                accept=".csv"
+                hidden
+                onChange={handleFileInput}
+              />
+            </Button>
             <Button
               onClick={downloadCsv}
               disabled={!csvOutput}
               variant="contained"
             >
-              Download EasyPost CSV(s)
+              Download EasyPost Batch File(s)
             </Button>
           </Stack>
         </Stack>
@@ -896,27 +906,33 @@ export default function Index() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <IconButton
-                      onClick={() => handleEditClick(shipment)}
-                      color="primary"
-                      aria-label="Edit Shipment"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDownloadCSV(shipment)}
-                      color="primary"
-                      aria-label="Download CSV"
-                    >
-                      <DownloadIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDownloadReturnCSV(shipment)}
-                      color="primary"
-                      aria-label="Download Return CSV"
-                    >
-                      <ReplyIcon />
-                    </IconButton>
+                    <Tooltip title="Edit Shipment" arrow>
+                      <IconButton
+                        onClick={() => handleEditClick(shipment)}
+                        color="primary"
+                        aria-label="Edit Shipment"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Download Easypost Shipment File" arrow>
+                      <IconButton
+                        onClick={() => handleDownloadCSV(shipment)}
+                        color="primary"
+                        aria-label="Download Easypost Shipment File"
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Download Easypost Return File" arrow>
+                      <IconButton
+                        onClick={() => handleDownloadReturnCSV(shipment)}
+                        color="primary"
+                        aria-label="Download Easypost Return File"
+                      >
+                        <ReplyIcon />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               );
