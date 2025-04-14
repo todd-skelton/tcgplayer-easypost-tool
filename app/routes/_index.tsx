@@ -836,10 +836,9 @@ export default function Index() {
             </FormControl>
           </Stack>
           <Typography variant="h6">TCG Player Shipping Export</Typography>
-
           <Stack direction="row" spacing={2}>
             <Button variant="contained" component="label">
-              Upload TCGPLAYER Shipping Export
+              Upload TCGPLAYER Shipping Export File
               <input
                 type="file"
                 accept=".csv"
