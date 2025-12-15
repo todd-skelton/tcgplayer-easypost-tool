@@ -21,7 +21,11 @@ export type EasyPostParcel = {
   predefined_package: EasyPostPackageType;
 };
 
-export type EasyPostService = "First" | "GroundAdvantage";
+export type EasyPostService =
+  | "First"
+  | "GroundAdvantage"
+  | "Priority"
+  | "Express";
 
 export type EasyPostShipment = {
   reference: string;

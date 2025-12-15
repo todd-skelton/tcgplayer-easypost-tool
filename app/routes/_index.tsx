@@ -74,6 +74,8 @@ type ShippingSettings = {
     height: string;
   };
   labelFormat: "PDF" | "PNG";
+  combineOrders: boolean;
+  expeditedService: EasyPostService;
 };
 
 const csv2jsonOptions = {
@@ -104,7 +106,8 @@ const calculateService = (
   shippingMethod: TcgPlayerShippingMethod,
   settings: ShippingSettings
 ): EasyPostService => {
-  if (shippingMethod.startsWith("Expedited")) return "GroundAdvantage";
+  if (shippingMethod.startsWith("Expedited"))
+    return settings.expeditedService ?? "GroundAdvantage";
   if (valueOfProducts >= Number(settings.flat.maxValue))
     return "GroundAdvantage";
   if (itemCount > Number(settings.flat.maxItemCount)) return "GroundAdvantage";
@@ -369,6 +372,8 @@ const defaultShippingSettings: ShippingSettings = {
     perItemWeight: defaultPerItemWeight.toString(),
   },
   labelFormat: "PDF",
+  combineOrders: true,
+  expeditedService: "GroundAdvantage",
 };
 
 export default function Index() {
@@ -416,7 +421,10 @@ export default function Index() {
     }
   };
 
-  const shippingSettingsOrDefault = shippingSettings ?? defaultShippingSettings;
+  const shippingSettingsOrDefault = {
+    ...defaultShippingSettings,
+    ...shippingSettings,
+  };
 
   const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files![0];
@@ -835,6 +843,25 @@ export default function Index() {
               </Select>
             </FormControl>
           </Stack>
+          <Typography variant="h6">Service Settings</Typography>
+          <Stack direction="row" spacing={2}>
+            <FormControl fullWidth>
+              <InputLabel id="expedited-service-label">
+                Expedited Service
+              </InputLabel>
+              <Select
+                id="expedited-service"
+                labelId="expedited-service-label"
+                value={shippingSettingsOrDefault.expeditedService}
+                label="Expedited Service"
+                onChange={handleUpdateShippingSettings("expeditedService")}
+              >
+                <MenuItem value="GroundAdvantage">Ground Advantage</MenuItem>
+                <MenuItem value="Priority">Priority</MenuItem>
+                <MenuItem value="Express">Express</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
           <Typography variant="h6">TCG Player Shipping Export</Typography>
           <Stack direction="row" spacing={2}>
             <Button variant="contained" component="label">
@@ -1151,6 +1178,8 @@ export default function Index() {
                 >
                   <MenuItem value="First">First</MenuItem>
                   <MenuItem value="GroundAdvantage">Ground Advantage</MenuItem>
+                  <MenuItem value="Priority">Priority</MenuItem>
+                  <MenuItem value="Express">Express</MenuItem>
                 </Select>
               </FormControl>
               <Typography variant="h6">Parcel Details</Typography>
